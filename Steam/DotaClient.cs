@@ -13,12 +13,6 @@ using SteamKit2.GC.Dota.Internal;
 
 namespace InhouseBot.Steam
 {
-    enum DotaClientStatus
-    {
-        Normal,
-        Warning,
-        Fatal
-    }
     enum DotaGameResult
     {
         Radiant,
@@ -175,6 +169,8 @@ namespace InhouseBot.Steam
                 Username = user,
                 Password = pass,
             });
+
+            pass = null;
         }
 
         void OnDisconnected(SteamClient.DisconnectedCallback callback)

@@ -1,7 +1,9 @@
 ﻿using InhouseBot.Discord;
 using InhouseBot.Discord.Commands;
+using InhouseBot.Mysql;
 using InhouseBot.Steam;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -11,6 +13,7 @@ namespace InhouseBot
     {
 
         public static XElement Document { get; private set; }
+        public static Database Database { get; private set; }
 
         private bool m_isRunning = false;
 
@@ -18,12 +21,18 @@ namespace InhouseBot
         {
             Document = XElement.Load("credentials.xml");
             new Program().AsyncMain().GetAwaiter().GetResult();
-            Console.ReadKey();
         }
 
         async Task AsyncMain()
         {
             m_isRunning = true;
+
+            Database = new Database();
+            Database.Update(123, "tabletest", new Dictionary<string, string>
+            {
+                { "key1", "value1" },
+                { "key2", "value2" }
+            });
 
             DiscordBot discordBot = new DiscordBot();
             await discordBot.StartBot();
@@ -33,7 +42,7 @@ namespace InhouseBot
 
             while (m_isRunning)
             {
-                await Task.Delay(10);
+                await Task.Delay(100);
             }
 
 
