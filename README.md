@@ -12,5 +12,6 @@ I'll add more info to the readme when/if I get farther in this project.
   <DiscordToken>DISCORD TOKEN</DiscordToken>
   <SteamUsername>USERNAME</SteamUsername>
   <SteamPassword>PASSWORD</SteamPassword>
+  <Mysql>server=127.0.0.1;uid=root;pwd=password;database=test</Mysql>
 </Root>
 ```
