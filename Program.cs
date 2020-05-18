@@ -28,11 +28,11 @@ namespace InhouseBot
             m_isRunning = true;
 
             Database = new Database();
-            Database.Update(123, "tabletest", new Dictionary<string, string>
-            {
-                { "key1", "value1" },
-                { "key2", "value2" }
-            });
+//             Database.Update(123, "tabletest", new Dictionary<string, string>
+//             {
+//                 { "key1", "value1" },
+//                 { "key2", "value2" }
+//             });
 
             DiscordBot discordBot = new DiscordBot();
             await discordBot.StartBot();
