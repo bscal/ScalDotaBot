@@ -12,14 +12,16 @@ namespace InhouseBot
     class Program
     {
 
-        public static XElement Document { get; private set; }
+        public readonly static XElement Document = XElement.Load("credentials.xml");
         public static Database Database { get; private set; }
+        public static SteamBot SteamBot { get; private set; }
+        public static DiscordBot DiscordBot { get; private set; }
+        public static SteamWebManager SteamWebManager { get; private set; }
 
         private bool m_isRunning = false;
 
         static void Main(string[] args)
         {
-            Document = XElement.Load("credentials.xml");
             new Program().AsyncMain().GetAwaiter().GetResult();
         }
 
@@ -28,24 +30,19 @@ namespace InhouseBot
             m_isRunning = true;
 
             Database = new Database();
-//             Database.Update(123, "tabletest", new Dictionary<string, string>
-//             {
-//                 { "key1", "value1" },
-//                 { "key2", "value2" }
-//             });
 
-            DiscordBot discordBot = new DiscordBot();
-            await discordBot.StartBot();
+            DiscordBot = new DiscordBot();
+            await DiscordBot.StartBot();
 
-            SteamBot steamBot = new SteamBot();
-            steamBot.StartSteam();
+            SteamWebManager = new SteamWebManager();
+
+            SteamBot = new SteamBot();
+            SteamBot.StartSteam();
 
             while (m_isRunning)
             {
                 await Task.Delay(100);
             }
-
-
         }
     }
 }
