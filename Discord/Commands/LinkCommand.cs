@@ -24,7 +24,7 @@ namespace InhouseBot.Discord.Commands
 
         [Command("link")]
         [Summary("Links a Discord Id to a Steam Id")]
-        public Task LinkAsync(string idArg)
+        public async Task LinkAsync(string idArg)
         {
             var sender = Context.User;
             UserData user = new UserData(sender.Id);
@@ -37,15 +37,25 @@ namespace InhouseBot.Discord.Commands
             else if (Regex.Match(idArg, @"^\[{1}\b[A-Z]\:{1}[0-9]\b").Success)
                 steamId.SetFromSteam3String(idArg);
             else
-                return Error();
+                await Error();
 
-            //user.Create();
-            return ReplyAsync($"{sender.Username} , {steamId.AccountID}");
+            user.SteamId = steamId.ConvertToUInt64();
+
+            bool errored = await user.Create();
+
+            var persona = await Program.SteamWebManager.GetUserName(steamId.ConvertToUInt64());
+            Console.WriteLine($"{persona}");
+
+
+            if (errored)
+                await ReplyAsync(user.err);
+            else
+                await ReplyAsync($"Account Linked! {sender.Mention} -> {persona}");
         }
 
         private Task<IUserMessage> Error()
         {
-            return ReplyAsync("Wrong syntax. Use !link steamid. Accepted SteamIds:\n" +
+            return ReplyAsync("Wrong syntax. Use !link steamid. Example SteamIds:\n" +
             "   steamID: STEAM_1:0:23512094\n" +
             "   steamID3: [U:1:47024188]\n" +
             "   steamID64: 76561198007289916");
