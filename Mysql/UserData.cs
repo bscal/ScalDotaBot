@@ -12,26 +12,33 @@ namespace InhouseBot.Mysql
         public ulong DiscordId { get; set; }
         public ulong SteamId { get; set; }
 
+        public string err;
+
         public UserData(ulong discordId)
         {
             DiscordId = discordId;
         }
 
-        public void Create()
+        public async Task<bool> Create()
         {
             try
             {
                 MySqlCommand cmd = Program.Database.Conn.CreateCommand();
-                cmd.CommandText = "INSERT INTO users VALUES (@discord_id, @steam_id)";
+                cmd.CommandText = "INSERT INTO users (discord_id, steam_id) VALUES (@discord_id, @steam_id)";
                 cmd.Parameters.AddWithValue("@discord_id", DiscordId);
                 cmd.Parameters.AddWithValue("@steam_id", SteamId);
                 Console.WriteLine(cmd.CommandText);
-                int rows = cmd.ExecuteNonQuery();
+                int rows = await cmd.ExecuteNonQueryAsync();
             }
             catch (MySqlException ex)
             {
                 Console.WriteLine(ex.Message);
+                if (ex.Code == 1062)
+                    err = "Duplicate ID in use.";
+                err = "Could not link account.";
+                return true;
             }
+            return false;
         }
 
         async public Task Fetch(Action<UserData> cb)

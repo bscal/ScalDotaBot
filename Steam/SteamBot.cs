@@ -11,8 +11,9 @@ namespace InhouseBot.Steam
     {
 
         private DotaClient m_client;
+        public DotaClient Client { get { return m_client; } }
 
-        public void StartSteam()
+    public void StartSteam()
         {
             Console.WriteLine("Starting Steam bot...");
 

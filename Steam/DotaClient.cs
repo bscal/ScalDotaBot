@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using SteamKit2;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SteamKit2.GC;
@@ -28,6 +24,7 @@ namespace InhouseBot.Steam
 
         SteamUser steamUser;
         SteamGameCoordinator gameCoordinator;
+        SteamFriends steamFriends;
 
         public bool isRunning;
 
@@ -54,11 +51,15 @@ namespace InhouseBot.Steam
 
             // create our steamclient instance
             steamClient = new SteamClient();
+            
             // create the callback manager which will route callbacks to function calls
             manager = new CallbackManager(steamClient);
 
             // get the steamuser handler, which is used for logging on after successfully connecting
             steamUser = steamClient.GetHandler<SteamUser>();
+
+            // get the steam friends handler, which is used for interacting with friends on the network after logging on
+            steamFriends = steamClient.GetHandler<SteamFriends>();
 
             gameCoordinator = steamClient.GetHandler<SteamGameCoordinator>();
             manager.Subscribe<SteamGameCoordinator.MessageCallback>(OnGCMessage);
@@ -196,6 +197,8 @@ namespace InhouseBot.Steam
                     return;
                 }
 
+                steamFriends.SetPersonaState(EPersonaState.Online);
+
                 Console.WriteLine("Unable to logon to Steam: {0} / {1}", callback.Result, callback.ExtendedResult);
 
                 isRunning = false;
@@ -295,5 +298,6 @@ namespace InhouseBot.Steam
 
             steamClient.Send(clientMsg);
         }
+
     }
 }
