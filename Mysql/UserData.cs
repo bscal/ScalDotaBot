@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace InhouseBot.Mysql
 {
-    class UserData
+    public class UserData
     {
         public ulong DiscordId { get; set; }
         public ulong SteamId { get; set; }
@@ -21,6 +21,17 @@ namespace InhouseBot.Mysql
 
         public async Task<bool> Create()
         {
+            return await Create(SteamId);
+        }
+
+        // Creates a new user in the database
+        public async Task<bool> Create(ulong steamId)
+        {
+            SteamId = steamId;
+
+            if (IsValid())
+                return Error("SteamId is not set.");
+
             try
             {
                 MySqlCommand cmd = Program.Database.Conn.CreateCommand();
@@ -34,59 +45,46 @@ namespace InhouseBot.Mysql
             {
                 Console.WriteLine(ex.Message);
                 if (ex.Code == 1062)
-                    err = "Duplicate ID in use.";
-                err = "Could not link account.";
-                return true;
+                    return Error("Duplicate ID in use.");
+                return Error("Could not link account.");
             }
             return false;
         }
 
-        async public Task Fetch(Action<UserData> cb)
+        public async Task<bool> Fetch()
         {
+            if (IsValid())
+                return Error("UserData is not valid.");
+
             try
             {
                 MySqlCommand cmd = Program.Database.Conn.CreateCommand();
-                cmd.CommandText = "SELECT * FROM users WHERE discord_id = @discord_id";
+                cmd.CommandText = "SELECT steam_id FROM users WHERE discord_id = @discord_id";
                 cmd.Parameters.AddWithValue("@discord_id", DiscordId);
                 var rs = await cmd.ExecuteReaderAsync();
-                DiscordId = (ulong)rs.GetInt64(1);
+                SteamId = (ulong)rs.GetInt64(0);
             }
             catch (MySqlException ex)
             {
                 Console.WriteLine(ex.Message);
-            }
-
-            cb.Invoke(this);
-        }
-
-        async public Task<bool> IsDiscordUsed(ulong discordId)
-        {
-            try
-            {
-                MySqlCommand cmd = Program.Database.Conn.CreateCommand();
-                cmd.CommandText = "SELECT * FROM users WHERE discord_id = @discord_id";
-                cmd.Parameters.AddWithValue("@discord_id", discordId);
-                var result = await cmd.ExecuteScalarAsync();
-                if (result != null)
-                    return true;
-            }
-            catch (MySqlException ex)
-            {
-                Console.WriteLine(ex.Message);
+                return true;
             }
             return false;
         }
 
         public void Update()
         {
+            if (IsValid())
+                Console.WriteLine("UserData is not valid");
+
             try
             {
                 MySqlCommand cmd = Program.Database.Conn.CreateCommand();
-                cmd.CommandText = "UPDATE users SET discord_id=@discord_id WHERE steam_id = @steam_id";
+                cmd.CommandText = "UPDATE users SET discord_id=@discord_id, steam_id = @steam_id WHERE steam_id = @steam_id";
                 cmd.Parameters.AddWithValue("@steam_id", SteamId);
                 cmd.Parameters.AddWithValue("@discord_id", DiscordId);
                 Console.WriteLine(cmd.CommandText);
-                int rows = cmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
             }
             catch (MySqlException ex)
             {
@@ -96,18 +94,32 @@ namespace InhouseBot.Mysql
 
         public void Delete()
         {
+            if (DiscordId == 0)
+                Console.WriteLine("UserData is not valid");
+
             try
             {
                 MySqlCommand cmd = Program.Database.Conn.CreateCommand();
-                cmd.CommandText = "DELETE FROM usersWHERE discord_id = @discord_id";
+                cmd.CommandText = "DELETE FROM users WHERE discord_id = @discord_id";
                 cmd.Parameters.AddWithValue("@discord_id", DiscordId);
                 Console.WriteLine(cmd.CommandText);
-                int rows = cmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
             }
             catch (MySqlException ex)
             {
                 Console.WriteLine(ex.Message);
             }
+        }
+
+        private bool IsValid()
+        {
+            return DiscordId != 0 && SteamId != 0;
+        }
+
+        private bool Error(string err)
+        {
+            this.err = err;
+            return true;
         }
     }
 }

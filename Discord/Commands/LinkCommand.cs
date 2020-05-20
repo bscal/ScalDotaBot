@@ -26,10 +26,11 @@ namespace InhouseBot.Discord.Commands
         [Summary("Links a Discord Id to a Steam Id")]
         public async Task LinkAsync(string idArg)
         {
-            var sender = Context.User;
+            SocketUser sender = Context.User;
             UserData user = new UserData(sender.Id);
             SteamID steamId = new SteamID();
 
+            // Checks steamid input to determine what type of id it is
             if (idArg.Contains("STEAM_"))
                 steamId.SetFromString(idArg, EUniverse.Public);
             else if (ulong.TryParse(idArg, out ulong id))
@@ -39,14 +40,18 @@ namespace InhouseBot.Discord.Commands
             else
                 await Error();
 
+            // Stores the steamid to an int64
             user.SteamId = steamId.ConvertToUInt64();
 
+            // Creates an user. Returns true if an error accures
+            // Duplicates do not need to be checked both discord and steam ids are unique
             bool errored = await user.Create();
 
-            var persona = await Program.SteamWebManager.GetUserName(steamId.ConvertToUInt64());
+            var persona = await Program.SteamWebManager.GetUserName(user.SteamId);
             Console.WriteLine($"{persona}");
 
-
+            // If errored bot responds the the error messaged set in user or confirms linked accounts
+            // These are made to be more user friendly
             if (errored)
                 await ReplyAsync(user.err);
             else
