@@ -41,11 +41,15 @@ namespace InhouseBot.Matchmaking
         {
             Random rand = new Random();
 
+
             MatchPlayer p;
             int iterations = 0;
             int delta = 0;
             int minDeltaCount = 0;
-
+            int rMmrTemp;
+            int dMmmrTemp;
+            List<MatchPlayer> rTemp;
+            List<MatchPlayer> dTemp;
             for (int i = 0; i < m_match.players.Count; i++)
             {
                 p = m_match.players[i];
@@ -62,8 +66,7 @@ namespace InhouseBot.Matchmaking
                 }
             }
             delta = Math.Abs(m_match.radMMR - m_match.direMMR);
-            List<MatchPlayer> rTemp;
-            List<MatchPlayer> dTemp;
+
 
             while (true)
             {
@@ -76,11 +79,9 @@ namespace InhouseBot.Matchmaking
                 m_match.direMMR += rTemp[i].mmr;
                 m_match.direMMR -= dTemp[j].mmr;
                 m_match.radMMR += dTemp[j].mmr;
-                Console.WriteLine($"Update: {m_match.radMMR} - {m_match.direMMR}");
-
                 int temp = Math.Abs(m_match.radMMR - m_match.direMMR);
-                Console.WriteLine(temp);
 
+                Console.WriteLine($"Update: {m_match.radMMR} - {m_match.direMMR} | {temp}");
                 m_match.radiant.ForEach((p) => { Console.Write($"{p.mmr} "); });
                 m_match.dire.ForEach((p) => { Console.Write($"{p.mmr} "); });
                 Console.WriteLine();
@@ -88,10 +89,12 @@ namespace InhouseBot.Matchmaking
                 if (temp < delta)
                 {
                     delta = temp;
+                    Console.WriteLine($"New Delta: {delta}");
                     MatchPlayer tr = rTemp[i];
                     MatchPlayer td = dTemp[j];
                     m_match.radiant[i] = td;
                     m_match.dire[j] = tr;
+                    minDeltaCount = 0;
                 }
                 else
                 {
@@ -99,17 +102,18 @@ namespace InhouseBot.Matchmaking
                     m_match.direMMR -= rTemp[i].mmr;
                     m_match.direMMR += dTemp[j].mmr;
                     m_match.radMMR -= dTemp[j].mmr;
-                    minDeltaCount++;
+                    if (iterations > 24)
+                        minDeltaCount++;
                 }
 
                 iterations++;
 
                 if (iterations > 50)
                     break;
-                else if (minDeltaCount > 9)
+                else if (minDeltaCount > 5)
                     break;
             }
-            Console.WriteLine($"Final: {m_match.radMMR} - {m_match.direMMR}");
+            Console.WriteLine($"Final: {m_match.radMMR} - {m_match.direMMR} | Diff: {delta} | Iters: {iterations}");
             return true;
         }
 

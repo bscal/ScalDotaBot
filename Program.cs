@@ -12,7 +12,7 @@ namespace InhouseBot
     class Program
     {
 
-        public readonly static XElement Document = XElement.Load("credentials.xml");
+        public static XElement Document { get; } = XElement.Load("credentials.xml");
         public static Database Database { get; private set; }
         public static SteamBot SteamBot { get; private set; }
         public static DiscordBot DiscordBot { get; private set; }
