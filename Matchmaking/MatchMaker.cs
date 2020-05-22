@@ -9,16 +9,13 @@ using System.Threading.Tasks;
 namespace InhouseBot.Matchmaking
 {
 
-    public class MatchMaker
+    public static class MatchMaker
     {
         private const int NEEDED_COUNT = 10;
 
         private readonly static List<MatchPlayer> m_queue = new List<MatchPlayer>();
 
-        private static bool m_makingMatch;
         public static MatchSettings m_match;
-
-        private MatchMaker() { }
 
         public static void Update()
         {
@@ -26,7 +23,6 @@ namespace InhouseBot.Matchmaking
             if (m_queue.Count >= NEEDED_COUNT)
             {
                 Console.WriteLine("2222");
-                m_makingMatch = true;
 
                 m_match = new MatchSettings();
                 m_match.players = m_queue.GetRange(0, NEEDED_COUNT);
@@ -46,8 +42,6 @@ namespace InhouseBot.Matchmaking
             int iterations = 0;
             int delta = 0;
             int minDeltaCount = 0;
-            int rMmrTemp;
-            int dMmmrTemp;
             List<MatchPlayer> rTemp;
             List<MatchPlayer> dTemp;
             for (int i = 0; i < m_match.players.Count; i++)
@@ -75,10 +69,10 @@ namespace InhouseBot.Matchmaking
 
                 var i = rand.Next(0, 4);
                 var j = rand.Next(0, 4);
-                m_match.radMMR -= rTemp[i].mmr;
-                m_match.direMMR += rTemp[i].mmr;
-                m_match.direMMR -= dTemp[j].mmr;
-                m_match.radMMR += dTemp[j].mmr;
+
+                m_match.radMMR = m_match.radMMR - rTemp[i].mmr + dTemp[j].mmr;
+                m_match.direMMR = m_match.radMMR - dTemp[j].mmr + rTemp[i].mmr;
+
                 int temp = Math.Abs(m_match.radMMR - m_match.direMMR);
 
                 Console.WriteLine($"Update: {m_match.radMMR} - {m_match.direMMR} | {temp}");
@@ -98,17 +92,15 @@ namespace InhouseBot.Matchmaking
                 }
                 else
                 {
-                    m_match.radMMR += rTemp[i].mmr;
-                    m_match.direMMR -= rTemp[i].mmr;
-                    m_match.direMMR += dTemp[j].mmr;
-                    m_match.radMMR -= dTemp[j].mmr;
+                    m_match.radMMR = m_match.radMMR + rTemp[i].mmr - dTemp[j].mmr;
+                    m_match.direMMR = m_match.radMMR + dTemp[j].mmr - rTemp[i].mmr;
                     if (iterations > 24)
                         minDeltaCount++;
                 }
 
                 iterations++;
 
-                if (iterations > 50)
+                if (iterations > 49)
                     break;
                 else if (minDeltaCount > 5)
                     break;
@@ -119,8 +111,6 @@ namespace InhouseBot.Matchmaking
 
         public static void StartMatch()
         {
-            m_makingMatch = false;
-
             m_queue.RemoveRange(0, NEEDED_COUNT);
 
         }
@@ -128,13 +118,21 @@ namespace InhouseBot.Matchmaking
         public static bool Join(MatchPlayer p)
         {
             m_queue.Add(p);
-
+            p.joinSlot = m_queue.Count;
             return true;
         }
 
-        public static void Leave(MatchPlayer p)
+        public static void Leave(ulong discordId)
         {
-            m_queue.Remove(p);
+            for (int i = 0; i < m_queue.Count; i++)
+            {
+                MatchPlayer p = m_queue[i];
+                if (p.data.DiscordId == discordId)
+                {
+                    m_queue.RemoveAt(i);
+                    break;
+                }
+            }
         }
 
         public static int QueueSize()
@@ -153,34 +151,20 @@ namespace InhouseBot.Matchmaking
         public int direMMR;
     }
 
-    public struct MatchPlayer
+    public class MatchPlayer
     {
         public UserData data;
         public DateTime entered;
         public int mmr;
 
-        public override bool Equals(object obj)
+        public int joinSlot;
+
+        public MatchPlayer() { }
+
+        public MatchPlayer(UserData data)
         {
-            if (this == null || obj == null) return false;
-
-            if (GetType() != typeof(MatchPlayer) || obj.GetType() != typeof(MatchPlayer)) return false;
-
-            return GetHashCode().Equals(obj.GetHashCode());
-        }
-
-        public override int GetHashCode()
-        {
-            return mmr.GetHashCode();
-        }
-
-        public static bool operator ==(MatchPlayer left, MatchPlayer right)
-        {
-            return left.Equals(right);
-        }
-
-        public static bool operator !=(MatchPlayer left, MatchPlayer right)
-        {
-            return !(left == right);
+            this.data = data;
+            this.entered = DateTime.Now;
         }
     }
 

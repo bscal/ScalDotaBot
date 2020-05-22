@@ -19,12 +19,16 @@ namespace InhouseBot.Mysql
             DiscordId = discordId;
         }
 
+        /// <inheritdoc cref="Create(ulong)"/>
         public async Task<bool> Create()
         {
             return await Create(SteamId);
         }
 
-        // Creates a new user in the database
+        /// <summary>
+        /// Creates a new user in the database <br></br>
+        /// returns true if an error occurred. Will set UserData.err with error message.
+        /// </summary>
         public async Task<bool> Create(ulong steamId)
         {
             SteamId = steamId;
@@ -51,6 +55,9 @@ namespace InhouseBot.Mysql
             return false;
         }
 
+        /// <summary>
+        /// Queries database for a steam id linked to the given UserData's discord id
+        /// </summary>
         public async Task<bool> Fetch()
         {
             if (IsValid())
@@ -62,6 +69,7 @@ namespace InhouseBot.Mysql
                 cmd.CommandText = "SELECT steam_id FROM users WHERE discord_id = @discord_id";
                 cmd.Parameters.AddWithValue("@discord_id", DiscordId);
                 var rs = await cmd.ExecuteReaderAsync();
+                await rs.ReadAsync();
                 SteamId = (ulong)rs.GetInt64(0);
             }
             catch (MySqlException ex)
